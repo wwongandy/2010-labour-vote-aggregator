@@ -25,9 +25,9 @@ getCandidates ukVotes = zip [0..] $ drop 2 $ head $ splitToLists ukVotes
 
 -- Insertion sort algorithm for sorting two tuples' votes by ascending order for each votee
 -- e.g. [(1,1),(4,2),(2,3),(3,4),(0,5)]
-isort :: Ord a => [(Int, a)] -> [(Int, a)]
-isort [] = []
-isort (x:xs) = insertionSort x $ isort xs
+sortVotes :: Ord a => [(Int, a)] -> [(Int, a)]
+sortVotes [] = []
+sortVotes (x:xs) = insertionSort x $ sortVotes xs
 
 insertionSort :: Ord a => (Int, a) -> [(Int, a)]  -> [(Int, a)]
 insertionSort x [] = [x]
@@ -39,11 +39,6 @@ insertionSort x (y:ys)
 -- e.g. [(0,5),(1,1),(2,3),(3,4),(4,2)]
 buildVotes :: [String] -> [(Int, Int)]
 buildVotes xs = [(az, read x :: Int) | (az, x) <- zip [0..] $ drop 2 xs, x /= "*", x /= ""]
-
--- Sort the two tuples' votes from each row in the dataset
--- e.g. [(1,1),(4,2),(2,3),(3,4),(0,5)]
-sortVotes :: [(Int, Int)] -> [(Int, Int)]
-sortVotes xs = isort xs
 
 -- Takes the first element of two tuples to build a list of them
 -- e.g. [1,4,2,3,0]
