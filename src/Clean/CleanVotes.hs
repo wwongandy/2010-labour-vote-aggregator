@@ -54,7 +54,7 @@ getCandidatesFromIndexes indexes candidates = map (\x -> snd $ candidates !! x) 
 -- Builds a list of just Votes from each votee
 -- e.g. [["E. Balls","E. Milliband","D. Milliband","A. Burbhm","D. Abbott"], ...]
 cleanVotes :: String -> [[String]]
-cleanVotes ukVotes = map (\x -> getCandidatesFromIndexes (firstElementToList (sortVotes (buildVotes x))) candidates) filteredVotes
+cleanVotes ukVotes = map (\x -> getCandidatesFromIndexes (firstElementToList $ sortVotes $ buildVotes x) candidates) filteredVotes
   where
     filteredVotes = tail $ splitToLists ukVotes
     candidates = getCandidates ukVotes
