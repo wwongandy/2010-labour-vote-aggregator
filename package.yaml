@@ -1,0 +1,56 @@
+name:                labour-vote-aggregator
+version:             0.1.0.0
+github:              "andyAndyA/2010-labour-vote-aggregator"
+license:             BSD3
+author:              "Wei Kit Wong"
+maintainer:          "weikitw1@gmail.com"
+copyright:           "2020 Wei Kit Wong"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/andyAndyA/2010-labour-vote-aggregator#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  exposed-modules:
+  - Lib
+  - Clean.CleanVotes
+  - Count.AlternativeVote
+  other-modules: []
+  dependencies:
+  - split
+
+executables:
+  labour-vote-aggregator-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - labour-vote-aggregator
+    - split
+
+tests:
+  labour-vote-aggregator-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - labour-vote-aggregator
