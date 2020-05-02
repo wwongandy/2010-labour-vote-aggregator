@@ -7,14 +7,28 @@ import Count.SingleTransferableVote
 
 main :: IO ()
 main = do
-  ukVotes <- readFile "data/sampleuk5.csv"
+  ukVotes <- readFile "data/uk.csv"
 
   ------------------------------------------------------
   -- Generating results
   ------------------------------------------------------
   print "Candidates"
   print $ getCandidates ukVotes
+
+  let cleanedVotes = cleanVotes ukVotes
   print "Cleaned Votes"
-  print $ cleanVotes ukVotes
+  print $ cleanedVotes
+
   print "Alternative Vote Winner"
-  print $ alternativeVote (cleanVotes ukVotes)
+  print $ alternativeVote cleanedVotes
+
+  let seatCount = 3
+  print "Seat Count for Single Transferable Vote (STV)"
+  print $ seatCount
+
+  let weight = 1000
+  print "Weight of Votes for STV"
+  print $ weight
+
+  print "STV Quota"
+  print $ getQuota cleanedVotes seatCount
