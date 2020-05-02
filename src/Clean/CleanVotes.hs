@@ -23,6 +23,23 @@ removeBlankVotees xss = filter (\xs -> countEmptyStrings xs /= length xs) xss
 getCandidates :: String -> [(Int, String)]
 getCandidates ukVotes = zip [0..] $ drop 2 $ head $ splitToLists ukVotes
 
+-- Extract the votes from each row in the dataset as a two tuple of (candidate index, vote priority)
+-- e.g. [(0,5),(1,1),(2,3),(3,4),(4,2)]
+buildVotes :: [String] -> [(Int, String)]
+buildVotes xs = [(i, x) | (i, x) <- zip [0..] $ drop 2 xs]
+
+-- Takes the second element of two tuples to build a list of them
+secondElementToList :: [(a, b)] -> [b]
+secondElementToList = map (snd)
+
+-- Removes all empty or asterik votes from rows
+cleanInvalidVotes :: [(Int, String)] -> [(Int, String)]
+cleanInvalidVotes = filter (\x -> snd x /= "" && snd x /= "*")
+
+-- Converts all two tuples into fully integers
+changeVotesToInts :: [(Int, String)] -> [(Int, Int)]
+changeVotesToInts xs = [(x, read y :: Int) | (x, y) <- xs]
+
 -- Insertion sort algorithm for sorting two tuples' votes by ascending order for each votee
 -- e.g. [(1,1),(4,2),(2,3),(3,4),(0,5)]
 sortVotes :: Ord a => [(Int, a)] -> [(Int, a)]
@@ -35,13 +52,25 @@ insertionSort x (y:ys)
   | snd x <= snd y = x : y : ys
   | otherwise = y : insertionSort x ys
 
--- Extract the votes from each row in the dataset as a two tuple
--- e.g. [(0,5),(1,1),(2,3),(3,4),(4,2)]
-buildVotes :: [String] -> [(Int, Int)]
-buildVotes xs = [(az, read x :: Int) | (az, x) <- zip [0..] $ drop 2 xs, x /= "*", x /= ""]
+-- Stop counting votes for the row if any duplicates are detected
+cleanDuplicateVotes :: [(Int, Int)] -> [(Int, Int)]
+cleanDuplicateVotes [] = []
+cleanDuplicateVotes (x : xs)
+  | snd x `elem` secondElementToList xs = []
+  | otherwise                           = x : cleanDuplicateVotes xs
+
+-- Stops counting votes for the row if any gap more than one between vote priorities are detected
+cleanGappedVotes :: [(Int, Int)] -> [(Int, Int)]
+cleanGappedVotes [] = []
+cleanGappedVotes (x : xs)
+  | snd x + 1 `notElem` secondElementToList xs  = [x]
+  | otherwise                                   = x : cleanGappedVotes xs
+
+-- Bundle all the invalid vote parsing as one operation
+validateVotes :: [(Int, String)] -> [(Int, Int)]
+validateVotes xs = cleanGappedVotes $ cleanDuplicateVotes $ sortVotes $ changeVotesToInts $ cleanInvalidVotes xs
 
 -- Takes the first element of two tuples to build a list of them
--- e.g. [1,4,2,3,0]
 firstElementToList :: [(Int, Int)] -> [Int]
 firstElementToList = map (fst)
 
@@ -54,7 +83,7 @@ getCandidatesFromIndexes indexes candidates = map (\x -> snd $ candidates !! x) 
 -- Builds a list of just Votes from each votee
 -- e.g. [["E. Balls","E. Milliband","D. Milliband","A. Burbhm","D. Abbott"], ...]
 cleanVotes :: String -> [[String]]
-cleanVotes ukVotes = map (\x -> getCandidatesFromIndexes (firstElementToList $ sortVotes $ buildVotes x) candidates) filteredVotes
+cleanVotes ukVotes = map (\x -> getCandidatesFromIndexes (firstElementToList $ validateVotes $ buildVotes x) candidates) filteredVotes
   where
-    filteredVotes = tail $ splitToLists ukVotes
+    filteredVotes = removeBlankVotees $ tail $ splitToLists ukVotes
     candidates = getCandidates ukVotes

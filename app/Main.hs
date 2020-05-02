@@ -6,7 +6,7 @@ import Count.AlternativeVote
 
 main :: IO ()
 main = do
-  ukVotes <- readFile "data/sampleuk4.csv"
+  ukVotes <- readFile "data/uk.csv"
 
   ------------------------------------------------------
   -- Generating results
