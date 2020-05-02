@@ -42,15 +42,15 @@ changeVotesToInts xs = [(x, read y :: Int) | (x, y) <- xs]
 
 -- Insertion sort algorithm for sorting two tuples' votes by ascending order for each votee
 -- e.g. [(1,1),(4,2),(2,3),(3,4),(0,5)]
-sortVotes :: Ord a => [(Int, a)] -> [(Int, a)]
+sortVotes :: Ord b => [(a, b)] -> [(a, b)]
 sortVotes [] = []
-sortVotes (x:xs) = insertionSort x $ sortVotes xs
+sortVotes (x : xs) = insertionSortAscending x $ sortVotes xs
 
-insertionSort :: Ord a => (Int, a) -> [(Int, a)]  -> [(Int, a)]
-insertionSort x [] = [x]
-insertionSort x (y:ys) 
-  | snd x <= snd y = x : y : ys
-  | otherwise = y : insertionSort x ys
+insertionSortAscending :: Ord b => (a, b) -> [(a, b)] -> [(a, b)]
+insertionSortAscending x [] = [x]
+insertionSortAscending x (y : ys) 
+  | snd x <= snd y  = x : y : ys
+  | otherwise       = y : insertionSortAscending x ys
 
 -- Stop counting votes for the row if any duplicates are detected
 cleanDuplicateVotes :: [(Int, Int)] -> [(Int, Int)]
