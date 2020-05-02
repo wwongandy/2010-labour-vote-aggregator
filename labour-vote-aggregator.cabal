@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d16ce13d4535e57ae5223b32e98931b485b967bad52077117079607508cc2813
+-- hash: 8a194b3d4f93f43919397b05904a2e874b8b1d8f218654e78a3abf34ad2bbf9a
 
 name:           labour-vote-aggregator
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       Lib
       Clean.CleanVotes
       Count.AlternativeVote
+      Count.SingleTransferableVote
   hs-source-dirs:
       src
   build-depends:

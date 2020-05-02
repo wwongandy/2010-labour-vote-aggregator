@@ -3,10 +3,11 @@ module Main where
 import Lib
 import Clean.CleanVotes
 import Count.AlternativeVote
+import Count.SingleTransferableVote
 
 main :: IO ()
 main = do
-  ukVotes <- readFile "data/uk.csv"
+  ukVotes <- readFile "data/sampleuk5.csv"
 
   ------------------------------------------------------
   -- Generating results

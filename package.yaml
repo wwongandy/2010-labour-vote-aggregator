@@ -28,6 +28,7 @@ library:
   - Lib
   - Clean.CleanVotes
   - Count.AlternativeVote
+  - Count.SingleTransferableVote
   other-modules: []
   dependencies:
   - split
