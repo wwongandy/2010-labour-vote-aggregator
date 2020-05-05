@@ -23,7 +23,7 @@ main = do
   print "Alternative Vote Winner"
   print $ alternativeVote cleanedVotes
 
-  let seatCount = 3
+  let seatCount = 4
   print "Seat Count for Single Transferable Vote (STV)"
   print $ seatCount
 
@@ -36,6 +36,9 @@ main = do
   print $ quota
 
   print "STV Results"
+  -- let updatedVotes = addVotesToRanking [] cleanedVotes candidates 1
+  -- print $ updatedVotes
+
   print $ singleTransferableVote cleanedVotes candidates seatCount weight
   -- let updatedRanking = sortRanking $ addRankings (getCurrentRoundRanking cleanedVotes candidates) []
   -- print $ updatedRanking
