@@ -36,23 +36,4 @@ main = do
   print $ quota
 
   print "STV Results"
-  -- let updatedVotes = addVotesToRanking [] cleanedVotes candidates 1
-  -- print $ updatedVotes
-
   print $ singleTransferableVote cleanedVotes candidates seatCount weight
-  -- let updatedRanking = sortRanking $ addRankings (getCurrentRoundRanking cleanedVotes candidates) []
-  -- print $ updatedRanking
-  -- let highestRanking = updatedRanking !! 0
-  -- print $ highestRanking
-  -- let lowestRanking = updatedRanking !! (length (updatedRanking) - 1)
-  -- print $ lowestRanking
-  -- let pastQuota = changeIntToFloat (length (snd highestRanking)) * weight >= quota
-  -- print $ pastQuota
-  -- let removedFromContest = if pastQuota then highestRanking else lowestRanking
-  -- print $ removedFromContest
-  -- let updatedCandidates = removeCandidateFromListing candidates removedFromContest
-  -- print $ updatedCandidates
-  -- let updatedVotes = redistributeVotesFromCandidate updatedRanking removedFromContest
-  -- print $ updatedVotes
-  -- let updatedWeight = if pastQuota then adjustWeightingToSurplus weight quota removedFromContest updatedVotes else weight
-  -- print $ updatedWeight
