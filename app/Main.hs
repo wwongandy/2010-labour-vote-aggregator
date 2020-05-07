@@ -23,7 +23,9 @@ main = do
   print "Alternative Vote Winner"
   print $ alternativeVote cleanedVotes
 
-  let seatCount = 4
+  print "How much seats would you like to elect using Single Transferable Vote (STV) ?"
+  seatCountInput <- getLine
+  let seatCount = read seatCountInput :: Int
   print "Seat Count for Single Transferable Vote (STV)"
   print $ seatCount
 
