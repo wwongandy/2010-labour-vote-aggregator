@@ -116,15 +116,12 @@ getVoteSurplus :: Float -> (String, Float) -> Float
 getVoteSurplus quota removedFromNextRound = (snd removedFromNextRound) - quota
 
 -- Calculates the new weighing based on the non-transferable and transferable vote counts
-adjustWeighingToNewRanking :: Float -> Float -> (String, Float) -> Float -> Float -> Float
-adjustWeighingToNewRanking quota transferableVoteWeight removedFromNextRound originalWeight currentWeight =
-  if transferableVoteWeight <= surplus then
+adjustWeighingToNewRanking :: Float -> Float -> Float -> Float -> Float
+adjustWeighingToNewRanking transferableVoteWeight roundVoteSurplus originalWeight currentWeight =
+  if transferableVoteWeight <= roundVoteSurplus then
     currentWeight
   else
-    -- trace ("surplus: " ++ show surplus ++ " | transferableVoteWeight: " ++ show transferableVoteWeight ++ " | currentWeight: " ++ show currentWeight)
-    originalWeight * (surplus / transferableVoteWeight)  
-  where
-    surplus = getVoteSurplus quota removedFromNextRound
+    originalWeight * (roundVoteSurplus / transferableVoteWeight)
 
 -- Performs the single transferable vote operations all created above to generate STV results
 getSTVResultSummary :: [[String]] -> [(Int, String)] -> Int -> Float -> Float -> Float -> [(String, [(Float, [String])])] -> Int -> [(Int, String, Float, Float, Float)]
@@ -144,13 +141,14 @@ getSTVResultSummary allVotes candidates seatCount originalWeight currentWeight q
       updatedCandidatesVotes = removeFromCandidateVotes _updatedCandidatesVotes removedFromNextRound
       updatedSeats = if pastQuota then seatCount - 1 else seatCount
       transferableVoteWeight = weighTransferableVotesFromCandidate _updatedCandidatesVotes removedFromNextRound candidatesLeft
-      updatedWeight = if pastQuota then adjustWeighingToNewRanking quota transferableVoteWeight removedFromNextRound originalWeight currentWeight else currentWeight
+      roundVoteSurplus = getVoteSurplus quota removedFromNextRound
+      updatedWeight = if pastQuota then adjustWeighingToNewRanking transferableVoteWeight roundVoteSurplus originalWeight currentWeight else currentWeight
       
       -- Outputting the results for this round
       -- [(Round, Elected, Total Vote Weighing, Surplus, New Weighing)]
       roundResult =
         if pastQuota then
-          [(roundNumber, fst removedFromNextRound, snd removedFromNextRound, getVoteSurplus quota removedFromNextRound, updatedWeight)]
+          [(roundNumber, fst removedFromNextRound, snd removedFromNextRound, roundVoteSurplus, updatedWeight)]
         else
           []
 
