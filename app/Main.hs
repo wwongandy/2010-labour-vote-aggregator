@@ -38,4 +38,5 @@ main = do
   print $ quota
 
   print "STV Results"
+  print "[(Round, Elected, Total Vote Weighing, Surplus, New Weighing)]"
   print $ singleTransferableVote cleanedVotes candidates seatCount weight
