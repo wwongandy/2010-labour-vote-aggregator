@@ -1,7 +1,6 @@
 module Count.SingleTransferableVote where
 
 import Clean.CleanVotes
-import Debug.Trace
 
 ------------------------------------------------------
 -- Algorithm 2: Single Transferable Vote
@@ -117,11 +116,9 @@ getVoteSurplus quota removedFromNextRound = (snd removedFromNextRound) - quota
 
 -- Calculates the new weighing based on the non-transferable and transferable vote counts
 adjustWeighingToNewRanking :: Float -> Float -> Float -> Float -> Float
-adjustWeighingToNewRanking transferableVoteWeight roundVoteSurplus originalWeight currentWeight =
-  if transferableVoteWeight <= roundVoteSurplus then
-    currentWeight
-  else
-    originalWeight * (roundVoteSurplus / transferableVoteWeight)
+adjustWeighingToNewRanking transferableVoteWeight roundVoteSurplus originalWeight currentWeight
+  | transferableVoteWeight <= roundVoteSurplus = currentWeight
+  | otherwise                                  = originalWeight * (roundVoteSurplus / transferableVoteWeight)
 
 -- Performs the single transferable vote operations all created above to generate STV results
 getSTVResultSummary :: [[String]] -> [(Int, String)] -> Int -> Float -> Float -> Float -> [(String, [(Float, [String])])] -> Int -> [(Int, String, Float, Float, Float)]
