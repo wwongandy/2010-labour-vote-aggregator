@@ -116,15 +116,14 @@ getVoteSurplus :: Float -> (String, Float) -> Float
 getVoteSurplus quota removedFromNextRound = (snd removedFromNextRound) - quota
 
 -- Calculates the new weighing based on the non-transferable and transferable vote counts
-adjustWeighingToNewRanking :: Float -> [(String, [(Float, [String])])] -> (String, Float) -> [(Int, String)] -> Float -> Float -> Float
-adjustWeighingToNewRanking quota candidatesVotes removedFromNextRound candidatesLeft originalWeight currentWeight =
+adjustWeighingToNewRanking :: Float -> Float -> (String, Float) -> Float -> Float -> Float
+adjustWeighingToNewRanking quota transferableVoteWeight removedFromNextRound originalWeight currentWeight =
   if transferableVoteWeight <= surplus then
     currentWeight
   else
     -- trace ("surplus: " ++ show surplus ++ " | transferableVoteWeight: " ++ show transferableVoteWeight ++ " | currentWeight: " ++ show currentWeight)
     originalWeight * (surplus / transferableVoteWeight)  
   where
-    transferableVoteWeight = weighTransferableVotesFromCandidate candidatesVotes removedFromNextRound candidatesLeft
     surplus = getVoteSurplus quota removedFromNextRound
 
 -- Performs the single transferable vote operations all created above to generate STV results
@@ -144,7 +143,8 @@ getSTVResultSummary allVotes candidates seatCount originalWeight currentWeight q
       updatedVotes = redistributeVotes _updatedCandidatesVotes removedFromNextRound candidatesLeft
       updatedCandidatesVotes = removeFromCandidateVotes _updatedCandidatesVotes removedFromNextRound
       updatedSeats = if pastQuota then seatCount - 1 else seatCount
-      updatedWeight = if pastQuota then adjustWeighingToNewRanking quota _updatedCandidatesVotes removedFromNextRound candidatesLeft originalWeight currentWeight else currentWeight
+      transferableVoteWeight = weighTransferableVotesFromCandidate _updatedCandidatesVotes removedFromNextRound candidatesLeft
+      updatedWeight = if pastQuota then adjustWeighingToNewRanking quota transferableVoteWeight removedFromNextRound originalWeight currentWeight else currentWeight
       
       -- Outputting the results for this round
       -- [(Round, Elected, Total Vote Weighing, Surplus, New Weighing)]
