@@ -14,7 +14,7 @@ countOccurances x = length . filter (== x)
 -- Remove duplicates from a list
 removeDuplicates :: Eq a => [a] -> [a]
 removeDuplicates []     = []
-removeDuplicates (x:xs) = x : filter (/= x) (removeDuplicates xs)
+removeDuplicates (x : xs) = x : filter (/= x) (removeDuplicates xs)
 
 -- Extracting the unique elements and the number of occurances in it from a list as a two tuple
 buildUniqueVotes :: Ord a => [a] -> [(Int, a)]
@@ -36,5 +36,5 @@ sortUniqueVotes = map snd . buildUniqueVotes . map head
 -- Find the unique element with the most number of occurances in it from a list
 alternativeVote :: Ord a => [[a]] -> a
 alternativeVote bs = case sortUniqueVotes (removeEmptyLists bs) of
-    [c]    -> c
-    (c:cs) -> alternativeVote (removeOccurances c bs)
+    [c]      -> c
+    (c : cs) -> alternativeVote (removeOccurances c bs)

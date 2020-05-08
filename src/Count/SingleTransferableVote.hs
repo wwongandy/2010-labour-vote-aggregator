@@ -9,15 +9,15 @@ import Debug.Trace
 
 -- Master quota calculator function used in Driver
 getQuota :: [[String]] -> Int -> Float -> Float
-getQuota cleanedVotes seatCount weight = (changeIntToFloat (length cleanedVotes) / (changeIntToFloat (seatCount) + 1) + 1) * weight
+getQuota cleanedVotes _seatCount weight =
+  ((validVotes / (seatCount + 1)) + 1) * weight
+    where
+      validVotes = changeIntToFloat $ length cleanedVotes
+      seatCount = changeIntToFloat $ _seatCount
 
--- Changes an integer value to a float
+-- Changes an int value to a float
 changeIntToFloat :: Int -> Float
 changeIntToFloat x = fromIntegral x :: Float
-
--- Takes the first element of two tuples to build a list of them
-firstElementToList :: [(a, b)] -> [a]
-firstElementToList = map (fst)
 
 -- Ensures that a vote belongs to the given candidate
 ensureVoteForCandidate :: [String] -> String -> Int -> Bool
@@ -32,20 +32,22 @@ filterVotesForEachCandidate votes candidates =
 updateCandidatesVotes :: [(String, [(Float, [String])])] -> [(String, [[String]])] -> Float -> [(String, [(Float, [String])])]
 updateCandidatesVotes [] candidatesVotes currentWeight =
   [(x, [ (currentWeight, a) | a <- y ]) | (x, y) <- candidatesVotes ]
-updateCandidatesVotes updatedCandidatesVotes [] currentWeight = updatedCandidatesVotes
-updateCandidatesVotes updatedCandidatesVotes candidatesVotes currentWeight =
-  [ (x, y ++ b) | (x, y) <- updatedCandidatesVotes, (a, b) <- _candidatesVotes, x == a ]
+updateCandidatesVotes updatedCandidatesVotes [] currentWeight =
+  updatedCandidatesVotes
+updateCandidatesVotes updatedCandidatesVotes _candidatesVotes currentWeight =
+  [ (x, y ++ b) | (x, y) <- updatedCandidatesVotes, (a, b) <- candidatesVotes, x == a ]
     where
-      _candidatesVotes = updateCandidatesVotes [] candidatesVotes currentWeight
+      candidatesVotes = updateCandidatesVotes [] _candidatesVotes currentWeight
 
--- Adds all of the floats together from a list
-addAll :: [Float] -> Float
+-- Adds all of the numbers together from a list
+addAll :: (Num a) => [a] -> a
 addAll (x : []) = x
 addAll (x : xs) = x + addAll xs
 
--- Counts up all of the votes for each candidate to produce a ranking
-countCandidatesVotes :: [(String, [(Float, [String])])] -> [(String, Float)]
-countCandidatesVotes candidatesVotes = map (\x -> (fst x, addAll [y | (y, _) <- snd x ]) ) candidatesVotes
+-- Weighs up all of the votes for each candidate to produce a ranking
+weighCandidateVotes :: [(String, [(Float, [String])])] -> [(String, Float)]
+weighCandidateVotes candidatesVotes =
+  map (\x -> (fst x, addAll [y | (y, _) <- snd x ]) ) candidatesVotes
 
 -- Sorts the ranking by descending order using the insertion sort algorithm
 -- Similiar to the one implemented at Clean.CleanVotes
@@ -61,40 +63,69 @@ insertionSortDescending x (y : ys)
 
 -- Removes the given candidate from the listing
 removeFromCandidatesList :: [(Int, String)] -> (String, Float) -> [(Int, String)]
-removeFromCandidatesList candidates removedFromNextRound = filter (\x -> snd x /= fst removedFromNextRound) candidates
+removeFromCandidatesList candidates removedFromNextRound =
+  filter (\x -> snd x /= candidate) candidates
+    where
+      candidate = fst removedFromNextRound
 
 -- Removes the given candidate from the list of candidate votes
 removeFromCandidateVotes :: [(String, [(Float, [String])])] -> (String, Float) -> [(String, [(Float, [String])])]
-removeFromCandidateVotes candidatesVotes removedFromNextRound = filter (\x -> fst x /= fst removedFromNextRound) candidatesVotes
+removeFromCandidateVotes candidatesVotes removedFromNextRound =
+  filter (\x -> fst x /= candidate) candidatesVotes
+    where
+      candidate = fst removedFromNextRound
 
--- Filters out the invalid candidates from a vote
-getNewVoteBodyForCandidate :: [String] -> [String] -> [String]
-getNewVoteBodyForCandidate vote candidates = [ x | x <- vote, x `elem` candidates ]
+-- Filters out the first invalid candidate from a vote
+filterInvalidCandidatesFromVote :: [String] -> [String] -> [String]
+filterInvalidCandidatesFromVote [] candidates = []
+filterInvalidCandidatesFromVote (x : vote) candidates
+  | x `elem` candidates = x : vote
+  | otherwise           = filterInvalidCandidatesFromVote vote candidates
 
--- Ensures that a vote belongs to a candidate in the given listing
+-- Ensures that atleast a single vote belongs to a candidate in the given listing
 ensureVoteForCandidates :: [String] -> [String] -> Bool
-ensureVoteForCandidates vote candidates = (length (getNewVoteBodyForCandidate vote candidates)) > 0
+ensureVoteForCandidates vote candidates = (length $ filteredVote) > 0
+  where
+    filteredVote = filterInvalidCandidatesFromVote vote candidates
+
+-- Gets the elected or eliminated candidate's vote body for this round
+getCandidateVotes :: [(String, [(Float, [String])])] -> (String, Float) -> (String, [(Float, [String])])
+getCandidateVotes candidatesVotes removedFromNextRound =
+  (filter (\x -> fst x == candidate) candidatesVotes) !! 0
+    where
+      candidate = fst removedFromNextRound
 
 -- Redistributes all of the votes belonging to a candidate to the master vote listing
 redistributeVotes :: [(String, [(Float, [String])])] -> (String, Float) -> [(Int, String)] -> [[String]]
-redistributeVotes _candidatesVotes removedFromNextRound _candidatesLeft =
-  [ (getNewVoteBodyForCandidate b candidatesLeft) | (a,b) <- snd candidatesVotes, ensureVoteForCandidates b candidatesLeft ]
+redistributeVotes candidatesVotes removedFromNextRound _candidatesLeft =
+  [ (filterInvalidCandidatesFromVote b candidatesLeft) | (a, b) <- snd candidateVotes, length b > 1, ensureVoteForCandidates b candidatesLeft ]
     where
-      candidate = fst removedFromNextRound
-      candidatesVotes = (filter (\x -> fst x == candidate) _candidatesVotes) !! 0
+      candidateVotes = getCandidateVotes candidatesVotes removedFromNextRound
       candidatesLeft = secondElementToList _candidatesLeft
 
--- Calculates the vote surplus based on the elected / eliminated person's total vote weighings and quota
-calculateVoteSurplus :: Float -> (String, Float) -> Float
-calculateVoteSurplus quota removedFromNextRound = (snd removedFromNextRound) - quota
+-- Weighs up all the transferable votes from a candidate
+weighTransferableVotesFromCandidate :: [(String, [(Float, [String])])] -> (String, Float) -> [(Int, String)] -> Float
+weighTransferableVotesFromCandidate candidatesVotes removedFromNextRound _candidatesLeft =
+  addAll [ a | (a, b) <- snd candidateVotes, ensureVoteForCandidates b candidatesLeft ]
+    where
+      candidateVotes = getCandidateVotes candidatesVotes removedFromNextRound
+      candidatesLeft = secondElementToList _candidatesLeft
+
+-- Calculates the vote surplus based on the elected or eliminated person's total vote weighings and quota
+getVoteSurplus :: Float -> (String, Float) -> Float
+getVoteSurplus quota removedFromNextRound = (snd removedFromNextRound) - quota
 
 -- Calculates the new weighing based on the non-transferable and transferable vote counts
-adjustWeighingToNewRanking :: Float -> [[String]] -> (String, Float) -> Float -> Float
-adjustWeighingToNewRanking quota updatedVotes removedFromNextRound currentWeight =
-  if transferableVoteCount <= surplus then currentWeight else currentWeight * (surplus / transferableVoteCount)
-    where
-      transferableVoteCount = changeIntToFloat $ length updatedVotes
-      surplus = calculateVoteSurplus quota removedFromNextRound
+adjustWeighingToNewRanking :: Float -> [(String, [(Float, [String])])] -> (String, Float) -> [(Int, String)] -> Float -> Float -> Float
+adjustWeighingToNewRanking quota candidatesVotes removedFromNextRound candidatesLeft originalWeight currentWeight =
+  if transferableVoteWeight <= surplus then
+    currentWeight
+  else
+    -- trace ("surplus: " ++ show surplus ++ " | transferableVoteWeight: " ++ show transferableVoteWeight ++ " | currentWeight: " ++ show currentWeight)
+    originalWeight * (surplus / transferableVoteWeight)  
+  where
+    transferableVoteWeight = weighTransferableVotesFromCandidate candidatesVotes removedFromNextRound candidatesLeft
+    surplus = getVoteSurplus quota removedFromNextRound
 
 -- Performs the single transferable vote operations all created above to generate STV results
 getSTVResultSummary :: [[String]] -> [(Int, String)] -> Int -> Float -> Float -> Float -> [(String, [(Float, [String])])] -> Int -> [(Int, String, Float, Float, Float)]
@@ -104,7 +135,7 @@ getSTVResultSummary allVotes candidates seatCount originalWeight currentWeight q
     where
       -- Calculating all of the necessary variables to determine the STV round results
       _updatedCandidatesVotes = updateCandidatesVotes candidatesVotes (filterVotesForEachCandidate allVotes candidates) currentWeight
-      roundRanking = sortRanking $ countCandidatesVotes _updatedCandidatesVotes
+      roundRanking = sortRanking $ weighCandidateVotes _updatedCandidatesVotes
       highestRanker = roundRanking !! 0
       pastQuota = (snd highestRanker > quota) || ((length candidates) <= seatCount)
       lowestRanker = roundRanking !! (length roundRanking - 1)
@@ -113,13 +144,13 @@ getSTVResultSummary allVotes candidates seatCount originalWeight currentWeight q
       updatedVotes = redistributeVotes _updatedCandidatesVotes removedFromNextRound candidatesLeft
       updatedCandidatesVotes = removeFromCandidateVotes _updatedCandidatesVotes removedFromNextRound
       updatedSeats = if pastQuota then seatCount - 1 else seatCount
-      updatedWeight = if pastQuota then adjustWeighingToNewRanking quota updatedVotes removedFromNextRound currentWeight else currentWeight
+      updatedWeight = if pastQuota then adjustWeighingToNewRanking quota _updatedCandidatesVotes removedFromNextRound candidatesLeft originalWeight currentWeight else currentWeight
       
       -- Outputting the results for this round
       -- [(Round, Elected, Total Vote Weighing, Surplus, New Weighing)]
       roundResult =
         if pastQuota then
-          [(roundNumber, fst removedFromNextRound, snd removedFromNextRound, calculateVoteSurplus quota removedFromNextRound, updatedWeight)]
+          [(roundNumber, fst removedFromNextRound, snd removedFromNextRound, getVoteSurplus quota removedFromNextRound, updatedWeight)]
         else
           []
 
